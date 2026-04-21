@@ -43,7 +43,7 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    logger.info("✅ База данных готова")
+    logger.info("База данных готова")
 
 def add_task(chat_id, message_id, task_text, created_by, urgency="Важная", repeat="none"):
     conn = sqlite3.connect('family_tasks.db')
@@ -142,16 +142,9 @@ def get_overdue_tasks():
 #Обработчики команд
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = """
-    👨‍👩‍👧‍👦 **FamilyTaskBot** — семейный органайзер!
+     **FamilyTaskBot** — семейный органайзер!
 
-    📌 **Что нового:**
-    • ✏️ Редактирование задач
-    • 🗑 Удаление задач
-    • 🔁 Повторяющиеся задачи (каждый день/неделю/месяц)
-    • ⏰ Напоминания о просроченных (24ч)
-    • 📋 Команда /my — мои задачи
-
-    🚀 **Команды:**
+     **Команды:**
     /task [что сделать] — создать задачу
     /list — все задачи
     /my — только мои задачи
@@ -164,20 +157,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = """
-    🤖 **FamilyTaskBot — Помощь**
+    **FamilyTaskBot — Помощь**
 
     **Основные команды:**
     /task [текст] — создать задачу
     /list — показать все задачи
     /my — показать только мои задачи
 
-    **Срочность:** Не особо 🐌, Важная 📌, Горит 🔥
+    **Срочность:** Не особо ,Важная ,Горит 
     **Повтор:** добавьте в конец задачи:
         «каждый день», «каждую неделю», «каждый месяц»
 
     **Управление задачей:** (видны только создателю)
-    ✏️ Исправить — изменить текст
-    🗑 Удалить — удалить задачу
+    Удалить — удалить задачу
 
     **Напоминания:** если задача не выполнена более 24ч, бот напомнит в чате.
     """
@@ -185,26 +177,25 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def task_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.type not in ["group", "supergroup"]:
-        await update.message.reply_text("❌ Добавьте меня в группу семьи!")
+        await update.message.reply_text("Добавьте меня в группу семьи!")
         return
 
     if not context.args:
         await update.message.reply_text(
-            "❌ Напишите что сделать!\n"
+            "Напишите что сделать!\n"
             "Пример: `/task купить хлеб`\n"
             "Пример: `/task вынести мусор каждый день`\n"
             "💡 Уровни срочности:\n"
-            "`Не особо` 🐌, `Важная` 📌, `Горит` 🔥",
+            "`Не особо` ,`Важная` ,`Горит` ",
             parse_mode='Markdown'
         )
         return
 
-    # Определяем срочность и повтор
+  
     urgency = "Важная"
     repeat = "none"
     task_parts = " ".join(context.args)
 
-    # Проверка на срочность
     if task_parts.lower().endswith(" горит"):
         urgency = "Горит"
         task_text = task_parts[:-6]
@@ -214,7 +205,6 @@ async def task_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         task_text = task_parts
 
-    # Проверка на повтор
     repeat_patterns = {
         r'\bкаждый день\b': 'daily',
         r'\bкаждую неделю\b': 'weekly',
@@ -228,10 +218,10 @@ async def task_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    urgency_icons = {"Не особо": "🐌", "Важная": "📌", "Горит": "🔥"}
-    icon = urgency_icons.get(urgency, "📌")
+    urgency_icons = {"Не особо", "Важная", "Горит"}
+    icon = urgency_icons.get(urgency)
 
-    # Отправляем сообщение с одной кнопкой "Я сделаю!"
+
     message = await update.effective_chat.send_message(
         f"{icon} **Новая задача от {user.full_name}:**\n"
         f"📋 {task_text}\n\n"
@@ -240,7 +230,7 @@ async def task_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"👤 Кто сделает?",
         parse_mode='Markdown',
         reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("✅ Я сделаю!", callback_data="take_task")
+            InlineKeyboardButton("Я сделаю!", callback_data="take_task")
         ]])
     )
 
@@ -256,28 +246,25 @@ async def task_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Добавляем кнопки редактирования/удаления (только для создателя)
     new_keyboard = [
-        [InlineKeyboardButton("✅ Я сделаю!", callback_data="take_task")],
+        [InlineKeyboardButton("Я сделаю!", callback_data="take_task")],
         [
-            InlineKeyboardButton("✏️ Исправить", callback_data=f"edit_{message.message_id}"),
             InlineKeyboardButton("🗑 Удалить", callback_data=f"delete_{message.message_id}")
         ]
     ]
     await message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(new_keyboard))
 
-    # Личное уведомление создателю
     try:
         await context.bot.send_message(
             chat_id=update.effective_user.id,
-            text=f"📲 Вы создали задачу: {task_text}\n"
-                 f"⚡ Срочность: {urgency}\n"
-                 f"🔁 Повтор: {repeat}\n"
-                 f"💬 Ожидайте исполнителя.",
+            text=f"Вы создали задачу: {task_text}\n"
+                 f"Срочность: {urgency}\n"
+                 f"Повтор: {repeat}\n"
+                 f"Ожидайте исполнителя.",
             parse_mode='Markdown'
         )
     except:
         logger.warning("Не удалось отправить личное уведомление создателю")
 
-    # Удаляем команду пользователя
     try:
         await update.message.delete()
     except:
@@ -290,10 +277,10 @@ async def list_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     tasks = get_chat_tasks(update.effective_chat.id)
     if not tasks:
-        await update.message.reply_text("🎉 Пока нет задач!")
+        await update.message.reply_text("Пока нет задач!")
         return
 
-    urgency_icons = {"Не особо": "🐌", "Важная": "📌", "Горит": "🔥"}
+    urgency_icons = {"Не особо", "Важная", "Горит"}
     open_tasks, taken_tasks, done_tasks = [], [], []
     for task_text, created_by, taken_by, status, urgency, repeat in tasks:
         if status == 'done':
@@ -303,24 +290,24 @@ async def list_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             open_tasks.append((task_text, created_by, taken_by, urgency, repeat))
 
-    message_text = "📋 **Семейные задачи:**\n\n"
+    message_text = "**Семейные задачи:**\n\n"
     if open_tasks:
-        message_text += "🔍 **Ищут исполнителя:**\n"
+        message_text += "**Ищут исполнителя:**\n"
         for task_text, created_by, _, urgency, repeat in open_tasks:
-            icon = urgency_icons.get(urgency, "📌")
-            repeat_str = f" 🔁 {repeat}" if repeat != 'none' else ''
-            message_text += f"{icon} {task_text}\n  👤 Создал: {created_by} | ⚡ {urgency}{repeat_str}\n\n"
+            icon = urgency_icons.get(urgency,)
+            repeat_str = f" {repeat}" if repeat != 'none' else ''
+            message_text += f"{icon} {task_text}\n  👤Создал: {created_by} | {urgency}{repeat_str}\n\n"
     if taken_tasks:
-        message_text += "✅ **В работе:**\n"
+        message_text += " **В работе:**\n"
         for task_text, created_by, taken_by, urgency, repeat in taken_tasks:
-            icon = urgency_icons.get(urgency, "📌")
-            repeat_str = f" 🔁 {repeat}" if repeat != 'none' else ''
-            message_text += f"{icon} {task_text}\n  👤 {created_by} → {taken_by} | ⚡ {urgency}{repeat_str}\n\n"
+            icon = urgency_icons.get(urgency, )
+            repeat_str = f" {repeat}" if repeat != 'none' else ''
+            message_text += f"{icon} {task_text}\n {created_by} → {taken_by} | {urgency}{repeat_str}\n\n"
     if done_tasks:
-        message_text += "🎉 **Выполнено:**\n"
+        message_text += "**Выполнено:**\n"
         for task_text, created_by, taken_by, urgency, repeat in done_tasks:
-            icon = "✅"
-            message_text += f"{icon} {task_text}\n  👤 {created_by} → {taken_by}\n\n"
+        
+            message_text += f"{task_text}\n  {created_by} → {taken_by}\n\n"
     await update.message.reply_text(message_text, parse_mode='Markdown')
 
 async def my_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -331,10 +318,10 @@ async def my_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     tasks = get_user_tasks(update.effective_chat.id, user.full_name)
     if not tasks:
-        await update.message.reply_text("🎉 У вас нет активных задач!")
+        await update.message.reply_text("У вас нет активных задач!")
         return
 
-    urgency_icons = {"Не особо": "🐌", "Важная": "📌", "Горит": "🔥"}
+    urgency_icons = {"Не особо", "Важная", "Горит"}
     taken_tasks, done_tasks = [], []
     for task_text, created_by, taken_by, status, urgency, repeat in tasks:
         if status == 'done':
@@ -342,54 +329,32 @@ async def my_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             taken_tasks.append((task_text, created_by, urgency, repeat))
 
-    message_text = f"📋 **Задачи для {user.full_name}:**\n\n"
+    message_text = f"**Задачи для {user.full_name}:**\n\n"
     if taken_tasks:
-        message_text += "✅ **В работе:**\n"
+        message_text += "**В работе:**\n"
         for task_text, created_by, urgency, repeat in taken_tasks:
-            icon = urgency_icons.get(urgency, "📌")
-            repeat_str = f" 🔁 {repeat}" if repeat != 'none' else ''
-            message_text += f"{icon} {task_text}\n  👤 от {created_by} | ⚡ {urgency}{repeat_str}\n\n"
+            icon = urgency_icons.get(urgency)
+            repeat_str = f"{repeat}" if repeat != 'none' else ''
+            message_text += f"{icon} {task_text}\n  от {created_by} | {urgency}{repeat_str}\n\n"
     if done_tasks:
-        message_text += "🎉 **Выполнено:**\n"
+        message_text += "**Выполнено:**\n"
         for task_text, created_by, urgency, repeat in done_tasks:
-            message_text += f"✅ {task_text}\n  👤 от {created_by}\n\n"
+            message_text += f" {task_text}\n от {created_by}\n\n"
     await update.message.reply_text(message_text, parse_mode='Markdown')
 
-# ---------- Обработка кнопок ----------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user = update.effective_user
     data = query.data
-
-    # Редактирование задачи
-    if data.startswith('edit_'):
-        task_message_id = int(data.split('_')[1])
-        task = get_task_by_message(task_message_id)
-        if not task:
-            await query.edit_message_text("❌ Задача не найдена!")
-            return
-        # Проверяем, что нажал создатель
-        if task[4] != user.full_name:  # created_by
-            await query.answer("❌ Только создатель может редактировать!", show_alert=True)
-            return
-        # Запоминаем, что пользователь хочет отредактировать эту задачу
-        context.user_data['editing_task'] = task_message_id
-        await query.edit_message_text(
-            text="✏️ Введите новый текст задачи:",
-            parse_mode='Markdown'
-        )
-        return
-
-    # Удаление задачи
     if data.startswith('delete_'):
         task_message_id = int(data.split('_')[1])
         task = get_task_by_message(task_message_id)
         if not task:
-            await query.edit_message_text("❌ Задача не найдена!")
+            await query.edit_message_text("Задача не найдена!")
             return
         if task[4] != user.full_name:
-            await query.answer("❌ Только создатель может удалить!", show_alert=True)
+            await query.answer("Только создатель может удалить!", show_alert=True)
             return
         delete_task(task_message_id)
         await query.edit_message_text(
@@ -398,40 +363,35 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Взятие задачи
     if data == "take_task":
         message_id = query.message.message_id
         task = get_task_by_message(message_id)
         if not task:
-            await query.edit_message_text("❌ Задача не найдена!")
+            await query.edit_message_text(" Задача не найдена!")
             return
         task_id, chat_id, msg_id, task_text, created_by, taken_by, created_at, status, urgency, repeat, taken_at = task
         if taken_by:
             await query.edit_message_text(
-                text=query.message.text + f"\n\n❌ Задача уже взята: {taken_by}",
+                text=query.message.text + f"\n\nЗадача уже взята: {taken_by}",
                 parse_mode='Markdown'
             )
             return
 
-        # Берём задачу
         take_task(message_id, user.full_name)
-        # Обновляем сообщение
-        urgency_icons = {"Не особо": "🐌", "Важная": "📌", "Горит": "🔥"}
-        icon = urgency_icons.get(urgency, "📌")
+        urgency_icons = {"Не особо", "Важная", "Горит"}
+        icon = urgency_icons.get(urgency)
         new_text = f"{icon} **Задача от {created_by}:**\n"
-        new_text += f"📋 {task_text}\n\n"
-        new_text += f"⚡ Срочность: **{urgency}**\n"
+        new_text += f"{task_text}\n\n"
+        new_text += f"Срочность: **{urgency}**\n"
         if repeat != 'none':
-            new_text += f"🔁 Повтор: **{repeat}**\n"
-        new_text += f"✅ **Взял(а): {user.full_name}**\n"
-        new_text += f"📅 Взято: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+            new_text += f"Повтор: **{repeat}**\n"
+        new_text += f"**Взял(а): {user.full_name}**\n"
+        new_text += f"Взято: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
         await query.edit_message_text(text=new_text, parse_mode='Markdown')
-
-        # Личное уведомление исполнителю
         try:
             await context.bot.send_message(
                 chat_id=update.effective_user.id,
-                text=f"🎯 Вы взяли задачу: {task_text}\n⚡ Срочность: {urgency}\n👤 Создатель: {created_by}",
+                text=f" Вы взяли задачу: {task_text}\nСрочность: {urgency}\n Создатель: {created_by}",
                 parse_mode='Markdown'
             )
         except:
@@ -439,16 +399,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Кнопка выполнения
         await query.message.reply_text(
-            f"🎉 Отлично, {user.full_name}!\n"
-            f"📝 {task_text}",
+            f"Отлично, {user.full_name}!\n"
+            f"{task_text}",
             parse_mode='Markdown',
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("✅ Задача выполнена", callback_data=f"complete_{message_id}")
+                InlineKeyboardButton(" Задача выполнена", callback_data=f"complete_{message_id}")
             ]])
         )
         return
 
-    # Завершение задачи
     if data.startswith('complete_'):
         task_message_id = int(data.split('_')[1])
         task = get_task_by_message(task_message_id)
@@ -457,18 +416,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         task_id, chat_id, msg_id, task_text, created_by, taken_by, created_at, status, urgency, repeat, taken_at = task
         if taken_by != user.full_name:
-            await query.answer(f"❌ Эту задачу взял {taken_by}. Только он может отметить выполнение!", show_alert=True)
+            await query.answer(f" Эту задачу взял {taken_by}. Только он может отметить выполнение!", show_alert=True)
             return
 
-        # Отмечаем выполненной
         mark_task_done(task_message_id)
 
-        # Если задача повторяющаяся, создаём новую
         if repeat != 'none':
-            # Создаём новое сообщение с задачей
             new_message = await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"🔄 **Задача возобновлена** (повтор: {repeat})",
+                text=f"**Задача возобновлена** (повтор: {repeat})",
                 parse_mode='Markdown'
             )
             add_task(
@@ -481,22 +437,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             # Добавляем кнопки к новому сообщению
             keyboard = [
-                [InlineKeyboardButton("✅ Я сделаю!", callback_data="take_task")],
+                [InlineKeyboardButton("Я сделаю!", callback_data="take_task")],
                 [
-                    InlineKeyboardButton("✏️ Исправить", callback_data=f"edit_{new_message.message_id}"),
                     InlineKeyboardButton("🗑 Удалить", callback_data=f"delete_{new_message.message_id}")
                 ]
             ]
             await new_message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(keyboard))
 
         # Обновляем исходное сообщение
-        urgency_icons = {"Не особо": "🐌", "Важная": "📌", "Горит": "🔥"}
-        icon = urgency_icons.get(urgency, "📌")
-        done_text = f"🎉 **ЗАДАЧА ВЫПОЛНЕНА!**\n\n" \
-                    f"{icon} Задача от {created_by}:\n📋 {task_text}\n\n" \
-                    f"⚡ Срочность была: {urgency}\n" \
-                    f"✅ Выполнил(а): {taken_by}\n" \
-                    f"📅 Выполнено: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+        urgency_icons = {"Не особо", "Важная", "Горит"}
+        icon = urgency_icons.get(urgency)
+        done_text = f"**ЗАДАЧА ВЫПОЛНЕНА!**\n\n" \
+                    f"Задача от {created_by}:\n📋 {task_text}\n\n" \
+                    f"Срочность была: {urgency}\n" \
+                    f"Выполнил(а): {taken_by}\n" \
+                    f"Выполнено: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
         try:
             await context.bot.edit_message_text(
                 chat_id=chat_id,
@@ -508,50 +463,48 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"Ошибка при редактировании: {e}")
 
         await query.edit_message_text(
-            text=f"✅ Задача выполнена! Молодец, {user.full_name}!",
+            text=f" Задача выполнена! Молодец, {user.full_name}!",
             parse_mode='Markdown'
         )
 
 # ---------- Обработка текстовых сообщений (для редактирования) ----------
-async def handle_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Принимаем новый текст задачи от пользователя, который хочет отредактировать"""
-    if 'editing_task' not in context.user_data:
-        return
-    task_message_id = context.user_data['editing_task']
-    new_text = update.message.text
-    task = get_task_by_message(task_message_id)
-    if not task:
-        await update.message.reply_text("❌ Задача не найдена!")
-        del context.user_data['editing_task']
-        return
-
-    # Обновляем текст в БД
-    update_task_text(task_message_id, new_text)
-
+#async def handle_edit_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+ #   """Принимаем новый текст задачи от пользователя, который хочет отредактировать"""
+  #  if 'editing_task' not in context.user_data:
+   #     return
+#    #task_message_id = context.user_data['editing_task']
+ #   new_text = update.message.text
+  #  task = get_task_by_message(task_message_id)
+   # if not task:
+    #    await update.message.reply_text("❌ Задача не найдена!")
+     #   del context.user_data['editing_task']
+      #  return
+#
+ #   # Обновляем текст в БД
+  #  update_task_text(task_message_id, new_text)
+#
     # Обновляем сообщение в чате
-    try:
-        chat_id = task[1]  # chat_id из кортежа
-        await context.bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=task_message_id,
-            text=f"✏️ **Задача изменена:**\n{new_text}",
-            parse_mode='Markdown'
-        )
-    except Exception as e:
-        logger.error(f"Не удалось отредактировать сообщение: {e}")
-
-    await update.message.reply_text("✅ Текст задачи обновлён!")
-    del context.user_data['editing_task']
-
-# ---------- Фоновая проверка просроченных задач ----------
+ #   try:
+  #      chat_id = task[1]  # chat_id из кортежа
+   #     await context.bot.edit_message_text(
+    #        chat_id=chat_id,
+     #       message_id=task_message_id,
+      #      text=f"✏️ **Задача изменена:**\n{new_text}",
+       #     parse_mode='Markdown'
+        #)
+    #except Exception as e:
+     #   logger.error(f"Не удалось отредактировать сообщение: {e}")
+#
+ #   await update.message.reply_text("✅ Текст задачи обновлён!")
+  #  del context.user_data['editing_task']
 async def check_overdue_tasks(context: ContextTypes.DEFAULT_TYPE):
-    """Проверка задач, взятых более 24 часов назад"""
+
     overdue = get_overdue_tasks()
     for chat_id, message_id, task_text, taken_by in overdue:
         try:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"⏰ Напоминание: {taken_by}, вы взяли задачу «{task_text}» более 24 часов назад! Не забудьте выполнить.",
+                text=f"Напоминание: {taken_by}, вы взяли задачу «{task_text}» более 24 часов назад! Не забудьте выполнить.",
                 parse_mode='Markdown'
             )
         except Exception as e:
@@ -561,7 +514,6 @@ def main():
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # Обработчики команд
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("task", task_command))
@@ -569,11 +521,7 @@ def main():
     app.add_handler(CommandHandler("my", my_command))
     app.add_handler(CommandHandler("tasks", list_command))
 
-    # Обработчик кнопок
     app.add_handler(CallbackQueryHandler(button_handler))
-
-    # Обработчик текста (для редактирования задач)
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_edit_text))
 
 
     job_queue = app.job_queue
@@ -583,24 +531,22 @@ def main():
         logger.warning("JobQueue не установлен. Напоминания работать не будут. Установите: pip install 'python-telegram-bot[job-queue]'")
 
     print("=" * 60)
-    print("🤖 СЕМЕЙНЫЙ БОТ ЗАПУЩЕН С НОВЫМИ ФУНКЦИЯМИ!")
+    print("СЕМЕЙНЫЙ БОТ ЗАПУЩЕН С НОВЫМИ ФУНКЦИЯМИ!")
     print("=" * 60)
-    print("✅ Редактирование, удаление, повтор, /my, напоминания")
+    print("Редактирование, удаление, повтор, /my, напоминания")
     app.run_polling()
-#запуск
 if __name__ == '__main__':
-    #Перезапуск
     while True:
         try:
-            print("\n🟢 Запуск бота...")
+            print("\n Запуск бота...")
             main()
-            print("✅ Бот завершил работу")
+            print(" Бот завершил работу")
             break
         except KeyboardInterrupt:
-            print("\n👋 Бот остановлен")
+            print("\nБот остановлен")
             break
         except Exception as e:
-            print(f"\n❌ Ошибка: {e}")
+            print(f"\n Ошибка: {e}")
             traceback.print_exc()
-            print("\n🔄 Перезапуск через 10 секунд...")
+            print("\n Перезапуск через 10 секунд...")
             time.sleep(10)
